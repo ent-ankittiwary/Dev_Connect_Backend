@@ -1,0 +1,32 @@
+.name{
+    color: blue;
+}
+
+/* .submitBtn{
+    font-size:xx-large,
+}
+#email{
+    font-weight: 900;
+}
+#Name{
+    font-weight: bolder;
+
+}
+.name{
+    color: aqua;
+} */
+*{
+    color:purple;
+    display:flex;
+    flex-direction: row ;
+    justify-content:space-evenly;
+    gap: 100px;
+    flex-wrap: wrap;
+    align-items: baseline;
+}
+
+ /* input{
+    color:red
+ } */
+
+
