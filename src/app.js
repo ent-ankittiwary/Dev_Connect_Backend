@@ -6,11 +6,19 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const app =express();
 
+// app.use(cors({
+//     origin:"http://localhost:5173", //this is whitelisting the domain name
+//     credentials:true,
+// })
+
+
 app.use(cors({
-    origin:"http://localhost:5173", //this is whitelisting the domain name
-    credentials:true,
-})
-);
+  origin: [
+    "http://localhost:5173",
+    "https://your-production-domain.com"
+  ],
+  credentials: true,
+}));
 app.use(cookieParser());
 app.use(express.json());
 const {userAuth} = require("./middleware/userAuth");
@@ -42,6 +50,15 @@ app.get("/profile",userAuth,async(req,res)=>{
         "email":email
     })
 })
+
+
+
+
+app.use(express.static(path.join(__dirname, "../DEV_CONNECT/dist")));
+
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../DEV_CONNECT/dist", "index.html"));
+});
 
  //connection to database
 async function startServer(){
