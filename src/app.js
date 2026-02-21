@@ -7,7 +7,7 @@ const cors = require("cors");
 const app =express();
 
 app.use(cors({
-    origin:"http://localhost:5173", //this is whitelisting the domain name
+    origin:"*", //this is whitelisting the domain name
     credentials:true,
 }));
 
