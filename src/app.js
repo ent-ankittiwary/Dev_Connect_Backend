@@ -7,7 +7,7 @@ const cors = require("cors");
 const app =express();
 
 app.use(cors({
-    origin:"*", //this is whitelisting the domain name
+    origin:"http://localhost:5173", //this is whitelisting the domain name
     credentials:true,
 }));
 
@@ -24,16 +24,16 @@ const {userRouter} = require("./routes/userRoutes");
 const {reviewRouter} =require("./routes/reviewRoutes");
 
 
-app.get("/",async(req,res)=>{
+app.get("/api",async(req,res)=>{
     res.send("Server is setup")
 });
 
 
 //authRouter
-app.use("/",authRouter);
-app.use("/",requestRouter);
-app.use("/",userRouter);
-app.use("/",reviewRouter);
+app.use("/api",authRouter);
+app.use("/api",requestRouter);
+app.use("/api",userRouter);
+app.use("/api",reviewRouter);
 //secure api acess
 app.get("/profile",userAuth,async(req,res)=>{
     const {name,age,email} =req.user;
