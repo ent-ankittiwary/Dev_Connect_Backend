@@ -212,9 +212,6 @@ userRouter.get("/review/:toUserId",userAuth, async (req, res) => {
   .sort({ createdAt: -1 });
 
 
-  // if(reviews.length===0){
-  //   return res.send("No reviews Exists right now");
-  // }
 
     res.send({message:"Reviews Fetched successfully",data:reviews});
 });
