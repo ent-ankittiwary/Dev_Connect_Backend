@@ -22,16 +22,30 @@ authRouter.post("/signup",async(req,res)=>{
             about,
             skills,
             email,
-            password:passwordHashed
+            password
         });
-        console.log(photoUrl);
         await revalidate();
         await cust1.save();
         res.send({"success":true,cust1});
     }
-    catch(err){
-        res.send("ERROR:"+ err.message);
-    }
+   catch (err) {
+
+  // Mongoose Validation Error
+  if (err.name === "ValidationError") {
+    const firstError = Object.values(err.errors)[0];
+
+    return res.status(400).json({
+      success: false,
+      message: firstError.message
+    });
+  }
+
+  // Normal Error
+  return res.status(400).json({
+    success: false,
+    message: err.message
+  });
+}
 
 })
 
