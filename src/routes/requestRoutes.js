@@ -4,6 +4,8 @@ const {connectionRequestModel} =require("../model/connectionRequest");
 const customer = require("../model/customer");
 const {userAuth} = require("../middleware/userAuth");
 
+
+//=======================SEND CONNECTION ========================
 requestRouter.post("/request/send/:status/:toUserId",userAuth,async(req,res)=>{
     try{
         const fromUserId = req.user._id;
@@ -54,7 +56,7 @@ requestRouter.post("/request/send/:status/:toUserId",userAuth,async(req,res)=>{
     }
 })
 
-//make a route to delete connection request with ignored status so that user can send fresh connections
+//=====================ACCEPT OR REJECT CONNECTIONS==================================
 requestRouter.post("/request/review/:status/:requestId",userAuth,async(req,res)=>{
     try{
         const loggedInUser = req.user; // it is received from user Auth
@@ -89,6 +91,8 @@ requestRouter.post("/request/review/:status/:requestId",userAuth,async(req,res)=
 
 });
 
-// make a route to delete rejected connection so that user could resend a request;
+//========= DELETE SENT REQUEST==================
+
+
 
 module.exports = {requestRouter};

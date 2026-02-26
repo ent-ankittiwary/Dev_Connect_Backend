@@ -7,17 +7,37 @@ const { authRouter } = require("./authRoutes");
 const { validateEditData } = require("../utils/validateEditData");
 const { Review } = require("../model/reviews");
 
-
-
-userRouter.get("/profile",userAuth,async(req,res)=>{
-  try{
-    const {_id,name,age,photoUrl,gender,about,skills,email} =req.user;
-    const userData ={_id,name,age,photoUrl,gender,about,skills,email};
+userRouter.get("/profile", userAuth, async (req, res) => {
+  try {
+    const { _id, name, age, photoUrl, gender, about, skills, email } = req.user;
+    const userData = { _id, name, age, photoUrl, gender, about, skills, email };
     res.send(userData);
-  }
-  catch(err){
+  } catch (err) {
     res.status(401).send("User Not Found,Please Register/Login First");
   }
+});
+
+//============SENT CONNECTION REQUEST=============================
+userRouter.get("/sent/requests",userAuth,async(req,res)=>{
+  try{
+    const loggedInUserId = req.user._id;
+    const sentConnections = await connectionRequestModel.find({
+      fromUserId:loggedInUserId,
+    }).populate("toUserId",["name","age","photoUrl","gender","skills","about"])
+     if (!sentConnections || sentConnections.length === 0) {
+      return res.status(404).json({
+        message: "You have not sent connection request to anyone. Send Now!",
+      });
+    }
+    res.status(200).json({
+      message:"success",
+      data:sentConnections
+    })
+}
+catch(err){
+  res.send(err.message);
+
+}
 });
 
 // ================= INTERESTED CONNECTIONS =================
@@ -29,9 +49,17 @@ userRouter.get("/interested/connections", userAuth, async (req, res) => {
     const connections = await connectionRequestModel
       .find({
         toUserId: loggedInUserId,
-        status: "interested",
+        status: "interested || ignored",
       })
-      .populate("fromUserId", ["name", "age", "photoUrl","gender","about","skills"]);
+      .populate("fromUserId", [
+        "name",
+        "age",
+        "photoUrl",
+        "gender",
+        "about",
+        "skills",
+        "email"
+      ]);
 
     if (!connections || connections.length === 0) {
       return res.status(404).json({
@@ -44,7 +72,6 @@ userRouter.get("/interested/connections", userAuth, async (req, res) => {
       message: "Interested connections fetched successfully",
       data: connections,
     });
-
   } catch (err) {
     res.status(500).json({
       message: "Failed to fetch interested connections",
@@ -53,85 +80,123 @@ userRouter.get("/interested/connections", userAuth, async (req, res) => {
   }
 });
 
-// // ================= ACCEPTED CONNECTIONS =================
+// // =======================================FEED======================================
 
-// userRouter.get("/accepted/connections", userAuth, async (req, res) => {
-//   console.log(req.user._id);
+// userRouter.get("/feed", userAuth, async (req, res) => {
 //   try {
-//     const loggedInUserId = req.user._id;
+//     const loggedInUser = req.user;
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     skip = (page - 1) * limit;
+//     const USER_SAFE_DATA = [
+//       "name",
+//       "age",
+//       "photoUrl",
+//       "gender",
+//       "about",
+//       "skills",
+//     ];
 
-// const connections = await connectionRequestModel
-//   .find({
-//     status: "accepted",
-//     $or: [
-//       { fromUserId: loggedInUserId },
-//       { toUserId: loggedInUserId },
-//     ],
-//   })
-//   .populate("fromUserId", ["name", "age", "photoUrl", "gender", "about", "skills"])
-//   .populate("toUserId", ["name", "age", "photoUrl", "gender", "about", "skills"]);
+//     console.log("LoggedInUser:", loggedInUser._id);
 
-//     if (!connections || connections.length === 0) {
-//       return res.status(404).json({
-//         message: "No accepted connections found",
-//       });
-//     }
+//     const connectionRequests = await connectionRequestModel.find({
+//       $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+//     });
+//     console.log(connectionRequests);
 
-//     res.status(200).json({
-//       message: "Accepted connections fetched successfully",
-//       data: connections,
+//     const hiddenUserFromFeed = new Set([loggedInUser._id]);
+
+//     connectionRequests.forEach((cr) => {
+//       hiddenUserFromFeed.add(cr.fromUserId);
+//       hiddenUserFromFeed.add(cr.toUserId);
 //     });
 
+//     // const users = await customer
+//     //   .find({
+//     //     _id: { $nin: [...hiddenUserFromFeed] },
+//     //   })
+//     //   .select(USER_SAFE_DATA)
+//     //   .skip(skip)
+//     //   .limit(limit);
+
+//     // const hiddenUserFromFeed = new Set();
+//     // hiddenUserFromFeed.add(loggedInUser._id.toString()); // hide self
+
+//     // connectionRequests.forEach((cr) => {
+//     //   hiddenUserFromFeed.add(cr.fromUserId.toString());
+//     //   hiddenUserFromFeed.add(cr.toUserId.toString());
+//     // });
+
+//     console.log("Hidden users:", Array.from(hiddenUserFromFeed));
+
+//     const usersAll = await customer
+//       .find({
+//         _id: { $nin: Array.from(hiddenUserFromFeed) },
+//       })
+//       .select(USER_SAFE_DATA)
+//       .skip(skip)
+//       .limit(limit);
+
+//     console.log("Feed users:", usersAll.length);
+
+//     res.json(usersAll);
 //   } catch (err) {
-//     res.status(500).json({
-//       message: "Failed to fetch accepted connections",
-//       error: err.message,
-//     });
+//     res.status(400).send(err.message);
 //   }
 // });
 
-// // =======================================FEED======================================
+
 
 userRouter.get("/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
-    const page = parseInt(req.query.page) || 1 ;
+
+    const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    skip =(page-1)*limit;
-    const USER_SAFE_DATA=["name","age","photoUrl","gender","about","skills"];
+    const skip = (page - 1) * limit; // ✅ FIXED (was global before)
 
-
-
+    const USER_SAFE_DATA = [
+      "name",
+      "age",
+      "photoUrl",
+      "gender",
+      "about",
+      "skills",
+      "email"
+    ];
 
     console.log("LoggedInUser:", loggedInUser._id);
 
     const connectionRequests = await connectionRequestModel.find({
       $or: [
         { fromUserId: loggedInUser._id },
-        { toUserId: loggedInUser._id }
-      ]
+        { toUserId: loggedInUser._id },
+      ],
     });
+
     console.log(connectionRequests);
 
-    const hiddenUserFromFeed = new Set();
-    hiddenUserFromFeed.add(loggedInUser._id.toString()); // hide self
+    // ✅ Keep ObjectId type (NO toString)
+    const hiddenUserFromFeed = new Set([loggedInUser._id]);
 
     connectionRequests.forEach((cr) => {
-      hiddenUserFromFeed.add(cr.fromUserId.toString());
-      hiddenUserFromFeed.add(cr.toUserId.toString());
+      hiddenUserFromFeed.add(cr.fromUserId);
+      hiddenUserFromFeed.add(cr.toUserId);
     });
 
-    console.log("Hidden users:", Array.from(hiddenUserFromFeed));
+    console.log("Hidden users:", [...hiddenUserFromFeed]);
 
-    const users = await customer.find({
-      _id: { $nin: Array.from(hiddenUserFromFeed) }
-    }).select(USER_SAFE_DATA).skip(skip).limit(limit);
+    const usersAll = await customer
+      .find({
+        _id: { $nin: [...hiddenUserFromFeed] }, // ✅ Spread properly
+      })
+      .select(USER_SAFE_DATA)
+      .skip(skip)
+      .limit(limit);
 
+    console.log("Feed users:", usersAll.length);
 
-
-    console.log("Feed users:", users.length);
-
-    res.json(users);
+    res.json(usersAll);
 
   } catch (err) {
     res.status(400).send(err.message);
@@ -140,22 +205,37 @@ userRouter.get("/feed", userAuth, async (req, res) => {
 
 //==================Edit Profile ===============================
 
-userRouter.patch("/profile/edit",userAuth,async(req,res)=>{
-  try{
+userRouter.patch("/profile/edit", userAuth, async (req, res) => {
+  try {
     await validateEditData(req);
-    const {_id} = req.user;
-    const {name,age,photoUrl,gender,about,skills} =req.body;
-    const updatedUser = await customer.findByIdAndUpdate({_id:_id},{$set:{name:name,age:age,photoUrl:photoUrl,gender:gender,about:about,skills:skills}},{new:true});
-    res.send({message:`${updatedUser.name} ,Your profile is successfully edited`,
-      data:updatedUser
-  });
-  }
-  catch(err){
-    res.status(400).send({message:"Age must be greater than 18 or Invalid Edit Request"});
+    const { _id } = req.user;
+    const { name, age, photoUrl, gender, about, skills } = req.body;
+    const updatedUser = await customer.findByIdAndUpdate(
+      { _id: _id },
+      {
+        $set: {
+          name: name,
+          age: age,
+          photoUrl: photoUrl,
+          gender: gender,
+          about: about,
+          skills: skills,
+        },
+      },
+      { new: true },
+    );
+    res.send({
+      message: `${updatedUser.name} ,Your profile is successfully edited`,
+      data: updatedUser,
+    });
+  } catch (err) {
+    res
+      .status(400)
+      .send({ message: "Age must be greater than 18 or Invalid Edit Request" });
   }
 });
 
-//=====================CONNECTIONS ROUTE=============================
+//=====================ACCEPTED CONNECTIONS ROUTE=============================
 
 userRouter.get("/accepted/connections", userAuth, async (req, res) => {
   try {
@@ -164,56 +244,68 @@ userRouter.get("/accepted/connections", userAuth, async (req, res) => {
     const connections = await connectionRequestModel
       .find({
         status: "accepted",
-        $or: [
-          { fromUserId: loggedInUserId },
-          { toUserId: loggedInUserId }
-        ]
+        $or: [{ fromUserId: loggedInUserId }, { toUserId: loggedInUserId }],
       })
-      .populate("fromUserId", ["name", "age", "photoUrl", "gender", "about", "skills"])
-      .populate("toUserId", ["name", "age", "photoUrl", "gender", "about", "skills"]);
+      .populate("fromUserId", [
+        "name",
+        "age",
+        "photoUrl",
+        "gender",
+        "about",
+        "skills",
+      ])
+      .populate("toUserId", [
+        "name",
+        "age",
+        "photoUrl",
+        "gender",
+        "about",
+        "skills",
+      ]);
 
-      console.log(connections);
+    console.log(connections);
 
     res.status(200).json({
       message: "Accepted connections fetched successfully",
-      data: connections
+      data: connections,
     });
   } catch (err) {
     res.status(500).json({
       message: "Failed to fetch accepted connections",
-      error: err.message
+      error: err.message,
     });
   }
 });
 
 //==============Deleted Connections=============================
 
-userRouter.delete("/accepted/connection/delete/:id",userAuth,async(req,res)=>{
-  try{
-    const {id} = req.params;
-    const deletedConnection = await connectionRequestModel.findOneAndDelete({_id:id});
-    res.send({message:"The connection deleted Successfully",data:deletedConnection});
-  }
-  catch(err){
-    res.send(err);
-  }
-})
-
+userRouter.delete(
+  "/accepted/connection/delete/:id",
+  userAuth,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deletedConnection = await connectionRequestModel.findOneAndDelete({
+        _id: id,
+      });
+      res.send({
+        message: "The connection deleted Successfully",
+        data: deletedConnection,
+      });
+    } catch (err) {
+      res.send(err);
+    }
+  },
+);
 
 //=====================reviews=======================
 
-
-userRouter.get("/review/:toUserId",userAuth, async (req, res) => {
-
-  // const {_id} =req.user;
-  const {toUserId} = req.params;
- const reviews = await Review.find({ toUserId: toUserId })
-  .populate("fromUserId", "name age photoUrl")
-  .sort({ createdAt: -1 });
-
-
-
-    res.send({message:"Reviews Fetched successfully",data:reviews});
+userRouter.get("/review/:toUserId", userAuth, async (req, res) => {
+  const { toUserId } = req.params;
+  const reviews = await Review.find({ toUserId: toUserId })
+    .populate("fromUserId", ["name", "age", "photoUrl"])
+    .sort({ createdAt: -1 });
+  res.send({ message: "Reviews Fetched successfully", data: reviews });
 });
 module.exports = { userRouter };
 //this is main branch testing

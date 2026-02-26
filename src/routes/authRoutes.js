@@ -23,7 +23,7 @@ authRouter.post("/signup",async(req,res)=>{
             skills,
             email,
             password
-        });
+        }); 
         await revalidate();
         await cust1.save();
         res.send({"success":true,cust1});
