@@ -24,18 +24,18 @@ const {userRouter} = require("./routes/userRoutes");
 const {reviewRouter} =require("./routes/reviewRoutes");
 
 
-app.get("/",async(req,res)=>{
+app.get("/api",async(req,res)=>{
     res.send("Server is setup")
 });
 
 
 //authRouter
-app.use("/",authRouter);
-app.use("/",requestRouter);
-app.use("/",userRouter);
-app.use("/",reviewRouter);
+app.use("/api",authRouter);
+app.use("/api",requestRouter);
+app.use("/api",userRouter);
+app.use("/api",reviewRouter);
 //secure api acess
-app.get("/profile",userAuth,async(req,res)=>{
+app.get("/api/profile",userAuth,async(req,res)=>{
     const {name,age,email} =req.user;
     res.send({
         "message":`Welcome ${name}`,
