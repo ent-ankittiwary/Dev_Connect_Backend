@@ -55,6 +55,14 @@ const customerSchema = new mongoose.Schema({
         "Password must be at least 8 characters and include uppercase, lowercase, number and symbol",
     },
   },
+  followersCount:{
+    type:Number,
+    default:0
+  },
+  followingCount:{
+    type:Number,
+    default:0
+  }
 });
 
 
