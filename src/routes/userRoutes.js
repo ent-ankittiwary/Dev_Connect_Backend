@@ -9,38 +9,50 @@ const { Review } = require("../model/reviews");
 
 userRouter.get("/profile", userAuth, async (req, res) => {
   try {
-    const { _id, name, age, photoUrl, gender, about, skills, email } = req.user;
-    const userData = { _id, name, age, photoUrl, gender, about, skills, email };
+    const { _id, name, age, photoUrl, gender, about, skills, email,followersCount ,followingCount} = req.user;
+    const userData = { _id, name, age, photoUrl, gender, about, skills, email,followersCount,followingCount };
     res.send(userData);
   } catch (err) {
     res.status(401).send("User Not Found,Please Register/Login First");
   }
 });
 
-//============SENT CONNECTION REQUEST=============================
-userRouter.get("/sent/requests",userAuth,async(req,res)=>{
-  try{
+//============GET SENT CONNECTION REQUEST=============================
+userRouter.get("/sent/requests", userAuth, async (req, res) => {
+  try {
     const loggedInUserId = req.user._id;
-    const sentConnections = await connectionRequestModel.find({
-      fromUserId:loggedInUserId,
-    }).populate("toUserId",["name","age","photoUrl","gender","skills","about"])
-     if (!sentConnections || sentConnections.length === 0) {
+
+    const sentConnections = await connectionRequestModel
+      .find({
+        fromUserId: loggedInUserId,
+        status: { $in: ["interested", "ignored"] },
+      })
+      .populate("toUserId", [
+        "name",
+        "age",
+        "photoUrl",
+        "gender",
+        "skills",
+        "about",
+      ]);
+
+    if (!sentConnections || sentConnections.length <= 0) {
       return res.status(404).json({
         message: "You have not sent connection request to anyone. Send Now!",
       });
     }
-    res.status(200).json({
-      message:"success",
-      data:sentConnections
-    })
-}
-catch(err){
-  res.send(err.message);
 
-}
+    res.status(200).json({
+      message: "success",
+      data: sentConnections,
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-// ================= INTERESTED CONNECTIONS =================
+// ================= GET INTERESTED CONNECTIONS =================
 
 userRouter.get("/interested/connections", userAuth, async (req, res) => {
   try {
@@ -49,7 +61,7 @@ userRouter.get("/interested/connections", userAuth, async (req, res) => {
     const connections = await connectionRequestModel
       .find({
         toUserId: loggedInUserId,
-        status: "interested || ignored",
+        status: { $in: ["interested"] }
       })
       .populate("fromUserId", [
         "name",
@@ -79,15 +91,50 @@ userRouter.get("/interested/connections", userAuth, async (req, res) => {
     });
   }
 });
+//===================================Search Bar===================================
 
-// // =======================================FEED======================================
+// userRouter.get("/feed", userAuth, async (req, res) => {
+//   try {
+
+//     const loggedInUserId = req.user._id;
+//     const { search } = req.query;
+
+//     let filter = {
+//       _id: { $ne: loggedInUserId } // exclude self
+//     };
+
+//     if (search && search.trim() !== "") {
+//       filter.name = {
+//         $regex: search.trim(),
+//         $options: "i"
+//       };
+//     }
+//     console.log(search);
+
+//     const searchedUsers = await customer.findOne(filter).select("-password");
+
+//     res.json({
+//       message: "true",
+//       data: searchedUsers
+//     });
+
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// });
+
+
+
+// //====================FEED=====================================
 
 // userRouter.get("/feed", userAuth, async (req, res) => {
 //   try {
 //     const loggedInUser = req.user;
+
 //     const page = parseInt(req.query.page) || 1;
 //     const limit = parseInt(req.query.limit) || 10;
-//     skip = (page - 1) * limit;
+//     const skip = (page - 1) * limit; // ✅ FIXED (was global before)
+
 //     const USER_SAFE_DATA = [
 //       "name",
 //       "age",
@@ -95,15 +142,23 @@ userRouter.get("/interested/connections", userAuth, async (req, res) => {
 //       "gender",
 //       "about",
 //       "skills",
+//       "email",
+//       "followersCount",
+//       "followingCount"
 //     ];
 
 //     console.log("LoggedInUser:", loggedInUser._id);
 
 //     const connectionRequests = await connectionRequestModel.find({
-//       $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+//       $or: [
+//         { fromUserId: loggedInUser._id },
+//         { toUserId: loggedInUser._id },
+//       ],
 //     });
+
 //     console.log(connectionRequests);
 
+//     // ✅ Keep ObjectId type (NO toString)
 //     const hiddenUserFromFeed = new Set([loggedInUser._id]);
 
 //     connectionRequests.forEach((cr) => {
@@ -111,27 +166,11 @@ userRouter.get("/interested/connections", userAuth, async (req, res) => {
 //       hiddenUserFromFeed.add(cr.toUserId);
 //     });
 
-//     // const users = await customer
-//     //   .find({
-//     //     _id: { $nin: [...hiddenUserFromFeed] },
-//     //   })
-//     //   .select(USER_SAFE_DATA)
-//     //   .skip(skip)
-//     //   .limit(limit);
-
-//     // const hiddenUserFromFeed = new Set();
-//     // hiddenUserFromFeed.add(loggedInUser._id.toString()); // hide self
-
-//     // connectionRequests.forEach((cr) => {
-//     //   hiddenUserFromFeed.add(cr.fromUserId.toString());
-//     //   hiddenUserFromFeed.add(cr.toUserId.toString());
-//     // });
-
-//     console.log("Hidden users:", Array.from(hiddenUserFromFeed));
+//     console.log("Hidden users:", [...hiddenUserFromFeed]);
 
 //     const usersAll = await customer
 //       .find({
-//         _id: { $nin: Array.from(hiddenUserFromFeed) },
+//         _id: { $nin: [...hiddenUserFromFeed] }, // ✅ Spread properly
 //       })
 //       .select(USER_SAFE_DATA)
 //       .skip(skip)
@@ -140,6 +179,7 @@ userRouter.get("/interested/connections", userAuth, async (req, res) => {
 //     console.log("Feed users:", usersAll.length);
 
 //     res.json(usersAll);
+
 //   } catch (err) {
 //     res.status(400).send(err.message);
 //   }
@@ -149,11 +189,13 @@ userRouter.get("/interested/connections", userAuth, async (req, res) => {
 
 userRouter.get("/feed", userAuth, async (req, res) => {
   try {
+
     const loggedInUser = req.user;
+    const { search } = req.query;
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit; // ✅ FIXED (was global before)
+    const skip = (page - 1) * limit;
 
     const USER_SAFE_DATA = [
       "name",
@@ -162,10 +204,10 @@ userRouter.get("/feed", userAuth, async (req, res) => {
       "gender",
       "about",
       "skills",
-      "email"
+      "email",
+      "followersCount",
+      "followingCount"
     ];
-
-    console.log("LoggedInUser:", loggedInUser._id);
 
     const connectionRequests = await connectionRequestModel.find({
       $or: [
@@ -174,9 +216,6 @@ userRouter.get("/feed", userAuth, async (req, res) => {
       ],
     });
 
-    console.log(connectionRequests);
-
-    // ✅ Keep ObjectId type (NO toString)
     const hiddenUserFromFeed = new Set([loggedInUser._id]);
 
     connectionRequests.forEach((cr) => {
@@ -184,19 +223,26 @@ userRouter.get("/feed", userAuth, async (req, res) => {
       hiddenUserFromFeed.add(cr.toUserId);
     });
 
-    console.log("Hidden users:", [...hiddenUserFromFeed]);
+    // 🔥 MAIN FILTER
+    let filter = {
+      _id: { $nin: [...hiddenUserFromFeed] }
+    };
+
+    // 🔥 ADD SEARCH CONDITION
+    if (search && search.trim() !== "") {
+      filter.name = {
+        $regex: search.trim(),
+        $options: "i"
+      };
+    }
 
     const usersAll = await customer
-      .find({
-        _id: { $nin: [...hiddenUserFromFeed] }, // ✅ Spread properly
-      })
+      .find(filter)
       .select(USER_SAFE_DATA)
       .skip(skip)
       .limit(limit);
 
-    console.log("Feed users:", usersAll.length);
-
-    res.json(usersAll);
+    res.json({message:"sucess",data:usersAll});
 
   } catch (err) {
     res.status(400).send(err.message);
@@ -235,16 +281,16 @@ userRouter.patch("/profile/edit", userAuth, async (req, res) => {
   }
 });
 
-//=====================ACCEPTED CONNECTIONS ROUTE=============================
+//=====================GET FOLLOWERS CONNECTIONS ROUTE=============================
 
-userRouter.get("/accepted/connections", userAuth, async (req, res) => {
+userRouter.get("/accepted/followers", userAuth, async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
 
-    const connections = await connectionRequestModel
+    const followers = await connectionRequestModel
       .find({
         status: "accepted",
-        $or: [{ fromUserId: loggedInUserId }, { toUserId: loggedInUserId }],
+        toUserId: loggedInUserId
       })
       .populate("fromUserId", [
         "name",
@@ -263,11 +309,9 @@ userRouter.get("/accepted/connections", userAuth, async (req, res) => {
         "skills",
       ]);
 
-    console.log(connections);
-
     res.status(200).json({
-      message: "Accepted connections fetched successfully",
-      data: connections,
+      message: " Followers fetched successfully",
+      data: followers,
     });
   } catch (err) {
     res.status(500).json({
@@ -277,26 +321,96 @@ userRouter.get("/accepted/connections", userAuth, async (req, res) => {
   }
 });
 
-//==============Deleted Connections=============================
-
-userRouter.delete(
-  "/accepted/connection/delete/:id",
-  userAuth,
-  async (req, res) => {
+//======================GET FOLLOWING CONNECTION ROUTE==================================
+userRouter.get("/accepted/followings",userAuth,async(req,res)=>{
     try {
-      const { id } = req.params;
-      const deletedConnection = await connectionRequestModel.findOneAndDelete({
-        _id: id,
-      });
-      res.send({
-        message: "The connection deleted Successfully",
-        data: deletedConnection,
-      });
-    } catch (err) {
-      res.send(err);
-    }
-  },
-);
+    const loggedInUserId = req.user._id;
+
+    const followings = await connectionRequestModel
+      .find({
+        status: "accepted",
+        fromUserId: loggedInUserId
+      })
+      .populate("fromUserId", [
+        "name",
+        "age",
+        "photoUrl",
+        "gender",
+        "about",
+        "skills",
+      ])
+      .populate("toUserId", [
+        "name",
+        "age",
+        "photoUrl",
+        "gender",
+        "about",
+        "skills",
+      ]);
+
+    res.status(200).json({
+      message: " Followers fetched successfully",
+      data: followings,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Failed to fetch accepted connections",
+      error: err.message,
+    });
+  }
+
+
+})
+
+//==============Remove Followers=============================
+
+// userRouter.delete(
+//   "/accepted/connection/delete/:toUserId",
+//   userAuth,
+//   async (req, res) => {
+//     try {
+//       const loggedInUserId = req.user._id;
+//       const {toUserId} = req.params;
+//       const deletedConnection = await connectionRequestModel.findOneAndDelete({
+//         toUserId:loggedInUserId, // logged in user
+//         fromUserId:toUserId, //other user
+//         status:"accepted"
+//       })
+//       res.send({
+//         message: "The connection deleted Successfully",
+//         data: deletedConnection,
+//       });
+//     } catch (err) {
+//       res.send(err);
+//     }
+//   },
+// );
+
+//======================Remove Following============================
+// userRouter.delete(
+//   "/accepted/connection/delete/:toUserId",
+//   userAuth,
+//   async (req, res) => {
+//     try {
+//       const loggedInUserId = req.user._id;
+//       const {toUserId} = req.params;
+//       const deletedConnection = await connectionRequestModel.findOneAndDelete({
+//         toUserId:toUserId,// other user
+//         fromUserId:loggedInUserId , //logged in user
+//         status:"accepted"
+//       })
+//       res.send({
+//         message: "The connection deleted Successfully",
+//         data: deletedConnection,
+//       });
+//     } catch (err) {
+//       res.send(err);
+//     }
+//   },
+// );
+
+
+
 
 //=====================reviews=======================
 
@@ -307,7 +421,41 @@ userRouter.get("/review/:toUserId", userAuth, async (req, res) => {
     .sort({ createdAt: -1 });
   res.send({ message: "Reviews Fetched successfully", data: reviews });
 });
+
+//===================================Search Bar===================================
+
+userRouter.get("/feed/user", userAuth, async (req, res) => {
+  try {
+
+    const loggedInUserId = req.user._id;
+    const { search } = req.query;
+
+    let filter = {
+      _id: { $ne: loggedInUserId } // exclude self
+    };
+
+    if (search && search.trim() !== "") {
+      filter.name = {
+        $regex: search.trim(),
+        $options: "i"
+      };
+    }
+    console.log(search);
+
+    const searchedUsers = await customer.findOne(filter).select("-password");
+
+    res.json({
+      message: "true",
+      data: searchedUsers
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 module.exports = { userRouter };
-//this is main branch testing
+
+//========================followers count==================================
+
 
 //demo3
