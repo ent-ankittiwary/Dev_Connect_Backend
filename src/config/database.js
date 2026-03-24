@@ -1,6 +1,6 @@
 const mongoose =require("mongoose");
-const DB_Connection_URL = process.env.DB_CONNECTION_SECRET
-console.log(DB_Connection_URL);
+const api = process.env.DB_CONNECTION_SECRET;
+console.log(api);
 const DBconnect = ()=>{
     try{
 
