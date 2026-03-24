@@ -1,10 +1,11 @@
 const mongoose =require("mongoose");
-const api = process.env.DB_CONNECTION_SECRET;
-console.log(api);
+const dotenv = require("dotenv");
+dotenv.config();
+const api = process.env.DB_CONNECT;
 const DBconnect = ()=>{
     try{
 
-         mongoose.connect("mongodb+srv://ent_ankittiwary:%23AnkitDevConnect01@cluster0.oicemgl.mongodb.net/DevConnect?retryWrites=true&w=majority");
+         mongoose.connect(api);
     }
     catch(err){
         console.log("Connection to DB failed");
