@@ -1,8 +1,9 @@
 const mongoose =require("mongoose");
+const api = process.env.DB_CONNECTION_SECRET;
 const DBconnect = ()=>{
     try{
 
-         mongoose.connect("mongodb://localhost:27017/Ankit27jan");
+         mongoose.connect(api);
        
     }
     catch(err){

@@ -1,5 +1,6 @@
 //token nikal k validate krna hain 
 const jwt = require("jsonwebtoken");
+
 const userB =require("../model/customer");
 const userAuth = async(req,res,next)=>{
     try{

@@ -1,5 +1,8 @@
 const express =require("express");
+const dotenv = require("dotenv");
+dotenv.config();
 const DBconnect = require("./config/database");
+const port = process.env.PORT;
 const customer = require("./model/customer");
 const jwt = require ("jsonwebtoken");
 const cookieParser = require("cookie-parser");
@@ -52,8 +55,8 @@ async function startServer(){
     try{
         await DBconnect();
         console.log("Successfullly connected to DB");
-        await app.listen(9193,()=>{
-            console.log("Server is listening to port no 9193")
+        await app.listen(port,()=>{
+            console.log("Server is listening to port No: "+`${port}`)
         });
 
     }
