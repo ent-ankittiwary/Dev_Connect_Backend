@@ -2,6 +2,7 @@ const express = require("express");
 const authRouter =express.Router();
 const revalidate =require("../scripts/revalidate");
 const customer =require("../model/customer");
+const jwtSecretKey = process.env.JWT_SECRET;
 const jwt =require("jsonwebtoken");
 const {validateSignUpData}= require("../utils/validateIncomingData");
 const User = require("../model/customer");
@@ -74,7 +75,7 @@ authRouter.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       { _id: cust1._id },
-      "<mysecretkey>",
+      jwtSecretKey,
       { expiresIn: "8h" }
     );
 

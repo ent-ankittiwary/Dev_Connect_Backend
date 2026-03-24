@@ -4,6 +4,9 @@ const customer = require("./model/customer");
 const jwt = require ("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const dotenv = require("dotenv");
+dotenv.config();
+const port = process.env.PORT;
 const app =express();
 
 app.use(cors({
@@ -52,8 +55,8 @@ async function startServer(){
     try{
         await DBconnect();
         console.log("Successfullly connected to DB");
-        await app.listen(9193,()=>{
-            console.log("Server is listening to port no 9193")
+        await app.listen(port,()=>{
+            console.log("Server is listening to port no: "+`${port}`)
         });
 
     }
