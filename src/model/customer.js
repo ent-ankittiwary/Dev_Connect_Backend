@@ -70,7 +70,7 @@ const customerSchema = new mongoose.Schema({
 customerSchema.pre("save", async function () {
 
   if (!this.isModified("password")) return;
-
+  
   const bcrypt = require("bcrypt");
   this.password = await bcrypt.hash(this.password, 10);
 });

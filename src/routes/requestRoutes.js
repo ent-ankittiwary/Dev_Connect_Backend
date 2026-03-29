@@ -4,6 +4,9 @@ const { connectionRequestModel } = require("../model/connectionRequest");
 const customer = require("../model/customer");
 const { userAuth } = require("../middleware/userAuth");
 
+const sendEmail = require("../utils/sendEmail");
+
+
 //=======================SEND CONNECTION FROM USER, FOLLOW REQUEST========================
 requestRouter.post(
   "/request/send/:status/:toUserId",
@@ -47,6 +50,11 @@ requestRouter.post(
         status,
       });
       const data = await connectionRequest.save();
+
+      const emailRes = await sendEmail.run();
+      console.log(emailRes);
+
+
       res.send({
         message: req.user.name + " is " + status + " in " + toUser.name,
         data,
