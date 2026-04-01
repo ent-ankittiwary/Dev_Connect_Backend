@@ -72,10 +72,11 @@ authRouter.post("/login", async (req, res) => {
         message: "Invalid email or password"
       });
     }
+    console.log(process.env.JWT_SECRET);
 
     const token = jwt.sign(
       { _id: cust1._id },
-      jwtSecretKey,
+      process.env.JWT_SECRET,
       { expiresIn: "8h" }
     );
 

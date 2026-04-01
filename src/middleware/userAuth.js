@@ -9,7 +9,7 @@ const userAuth = async(req,res,next)=>{
             return res.status(401).send("Invalid token,please Login first");
         }
         //validate the given token
-
+        console.log(process.env.JWT_SECRET);
         const decodedMessageObject =await jwt.verify(token,process.env.JWT_SECRET);
         // decoded token will store (_id,pat,expiry)
         const {_id}= decodedMessageObject;

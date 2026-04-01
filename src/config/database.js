@@ -1,10 +1,8 @@
 const mongoose =require("mongoose");
-require("dotenv").config();
-
 const DBconnect = async ()=>{
     try{
-
-         await mongoose.connect(process.env.DB_CONNECT);
+        console.log(process.env.DB_CONNECTION_SECRET);
+         await mongoose.connect(process.env.DB_CONNECTION_SECRET);
     }
     catch(err){
         console.log("Connection to DB failed");

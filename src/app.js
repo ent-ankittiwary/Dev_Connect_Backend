@@ -1,11 +1,10 @@
+require("dotenv").config();
 const express =require("express");
 const DBconnect = require("./config/database");
 const customer = require("./model/customer");
 const jwt = require ("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const dotenv = require("dotenv");
-dotenv.config();
 const app =express();
 
 app.use(cors({
@@ -51,7 +50,6 @@ app.get("/api/profile",userAuth,async(req,res)=>{
 async function startServer(){
     try{
         await DBconnect();
-        console.log("Successfullly connected to DB");
         await app.listen(process.env.PORT,()=>{
             console.log("Server is listening to port no: "+`${process.env.PORT}`);
         });
