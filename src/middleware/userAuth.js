@@ -1,6 +1,5 @@
 //token nikal k validate krna hain 
 const jwt = require("jsonwebtoken");
-const jwtSecretKey = process.env.JWT_SECRET;
 const userB =require("../model/customer");
 const userAuth = async(req,res,next)=>{
     try{
@@ -11,7 +10,7 @@ const userAuth = async(req,res,next)=>{
         }
         //validate the given token
 
-        const decodedMessageObject =await jwt.verify(token,jwtSecretKey);
+        const decodedMessageObject =await jwt.verify(token,process.env.JWT_SECRET);
         // decoded token will store (_id,pat,expiry)
         const {_id}= decodedMessageObject;
         const user = await userB.findOne({_id:_id});

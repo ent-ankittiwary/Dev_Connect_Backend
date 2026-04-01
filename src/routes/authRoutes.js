@@ -1,7 +1,6 @@
 const express = require("express");
 const authRouter =express.Router();
 const revalidate =require("../scripts/revalidate");
-const jwtSecretKey = process.env.JWT_SECRET;
 const customer =require("../model/customer");
 const jwt =require("jsonwebtoken");
 const {validateSignUpData}= require("../utils/validateIncomingData");
@@ -74,7 +73,7 @@ authRouter.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       { _id: cust1._id },
-      jwtSecretKey,
+      process.env.JWT_SECRET,
       { expiresIn: "8h" }
     );
 

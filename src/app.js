@@ -1,8 +1,6 @@
+require("dotenv").config(); 
 const express =require("express");
-const dotenv = require("dotenv");
-dotenv.config();
 const DBconnect = require("./config/database");
-const port = process.env.PORT;
 const customer = require("./model/customer");
 const jwt = require ("jsonwebtoken");
 const cookieParser = require("cookie-parser");
@@ -51,17 +49,21 @@ app.get("/profile",userAuth,async(req,res)=>{
 
 
  //connection to database
+
+
 async function startServer(){
     try{
         await DBconnect();
-        console.log("Successfullly connected to DB");
-        await app.listen(port,()=>{
-            console.log("Server is listening to port No: "+`${port}`)
+        console.log("Successfully connected to DB");
+        console.log(process.env.PORT);
+
+        app.listen(process.env.PORT, () => {
+            console.log("Server running on port 9193" );
         });
 
-    }
-    catch(err){
+    } catch(err){
         console.log(err);
     }
 }
+
 startServer();
