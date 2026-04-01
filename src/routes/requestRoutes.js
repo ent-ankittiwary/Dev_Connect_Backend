@@ -4,7 +4,7 @@ const { connectionRequestModel } = require("../model/connectionRequest");
 const customer = require("../model/customer");
 const { userAuth } = require("../middleware/userAuth");
 
-const sendEmail = require("../utils/sendEmail");
+// const sendEmail = require("../utils/sendEmail");
 
 
 //=======================SEND CONNECTION FROM USER, FOLLOW REQUEST========================
@@ -51,8 +51,8 @@ requestRouter.post(
       });
       const data = await connectionRequest.save();
 
-      const emailRes = await sendEmail.run();
-      console.log(emailRes);
+      // const emailRes = await sendEmail.run();
+      // console.log(emailRes);
 
 
       res.send({
