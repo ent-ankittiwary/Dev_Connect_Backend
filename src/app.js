@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const app =express();
 
+
 app.use(cors({
     origin:"http://localhost:5173", //this is whitelisting the domain name
     credentials:true,
@@ -23,6 +24,7 @@ const {authRouter} = require("./routes/authRoutes");
 const {requestRouter} = require("./routes/requestRoutes");
 const {userRouter} = require("./routes/userRoutes");
 const {reviewRouter} =require("./routes/reviewRoutes");
+const initializeSocket = require("./utils/socket");
 
 
 app.get("/",async(req,res)=>{
@@ -45,6 +47,11 @@ app.get("/profile",userAuth,async(req,res)=>{
     })
 })
 
+//connection to socket.js
+const http = require("http");
+const server= http.createServer(app);
+initializeSocket(server);
+
 
 
 
@@ -57,7 +64,7 @@ async function startServer(){
         console.log("Successfully connected to DB");
         console.log(process.env.PORT);
 
-        app.listen(process.env.PORT, () => {
+        server.listen(process.env.PORT, () => {
             console.log("Server running on port 9193" );
         });
 
